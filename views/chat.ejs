@@ -1,0 +1,167 @@
+<html>
+<head>
+  <title>Superhero Chats</title>
+
+  <link href="/css/bootstrap.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+  <link rel="icon" href="/images/chat_logo.png" type="image/x-icon"/>
+</head>
+
+<body>
+
+  <!-- container where minion logo is there -->
+  <div class="container">
+      <div class="row">
+       <div align="center" id="nickWrap">
+            <img height="500" width="500" class="img-circle responsive-image"  src="/images/chat-image.jpg"/>
+            <h3>Select Your Supehero Username</h3>
+            <p id="nickError"></p>
+           <div class="form-group">
+         
+             <form id="setNick" role="form">
+               <input  type="text" autofocus 
+               required 
+               placeholder="Your nickname" id="nickname"/>
+               <input class="btn btn-info" type="submit" value="Submit"/>
+             </form>
+
+         </div>
+      </div>
+     </div>
+  </div>
+
+<!-- after entering the username -->
+<div id="chatWindow">
+
+ <div class="container">
+ 		<div class="row">
+ 			<div class="col-md-6 col-sm-offset-1 panel panel-primary">
+            <div class="panel-body">
+               <div id="contentWrap" >
+                  <div id="chatWrap" style=" border-radius: 10px;
+                      background: #F0E0B0;background: url(/images/wood.jpg);min-height: 400;max-height: 400;overflow-y: scroll;">
+                      <div id="chat"></div>
+                  </div>
+               </div>
+            </div>
+        </div>
+   <br/>
+      <div class="col-md-4 col-sm-offset-1 panel panel-default">
+        <div class="panel-heading">Currently Online</div>
+         <div class="panel-body">
+            <div  id="users"></div>
+        </div>
+      </div>
+   </div>
+ </div>
+ <br/>
+
+ <div class="row">
+  <div class="col-md-3 col-md-offset-2">
+    <form id="message-box">
+      <div class="form-group">
+       <textarea required autofocus style="background-color:#ffffe6;border:double 4px orange;border-radius: 0.5em;" rows="3" cols="60" id="message" placeholder="Write your message and press enter.."></textarea>
+      </div>
+   </form>
+ </div>
+ </div>
+</div>
+
+   <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+   <script src="/socket.io/socket.io.js"></script>
+   <script src="/js/bootstrap.js"></script>
+
+   <script>
+    jQuery(function($){
+       var socket = io.connect(); //a connection will establish to server
+
+       var $messageForm = $('#message-box');
+       var $messageBox=$('#message');
+       var $chat=$('#chat');
+
+       var chatOuter=$('#chatWrap');
+       var chatInner=$('#chat');
+
+       var $users=$('#users');
+       var $nickForm = $('#setNick');
+       var $nickError=$('#nickError');
+       var $nickBox = $('#nickname'); //input field name where you enter name
+       var title='anonymous';
+
+       $('#message').keydown(function(event) {
+          if (event.keyCode == 13) { //enter key
+               $(this.form).submit();
+              return false;
+             }
+       });
+
+
+       $nickForm.submit(function(e){
+           
+           e.preventDefault(); //prevent the default behaviour
+           title = $nickBox.val(); 
+
+           socket.emit('new user',$nickBox.val(),function(data){
+                if(data){
+                  $('#nickWrap').hide(); //hiding the login form
+                    document.title=title;
+                  $('#chatWindow').show(); //show the chat window
+                }else{
+                  $nickError.html("<p class='alert alert-danger'>Sorry, that nickname is already taken , try something else</p>");
+                }
+           });
+           $nickBox.val('');
+       });
+
+       socket.on('usernames',function(users){
+            var html='<ul>';
+            for(i=0;i<users.length;i++){
+              html+='<li><span>'+users[i]+'</span></li>';
+            }
+            html=html+'</ul>';
+            $users.html(html);
+        });
+
+
+       
+       $messageForm.submit(function(e){
+            e.preventDefault();
+            socket.emit('send message',$messageBox.val(),function(data){
+              $chat.append("<p align='right' class='error'>"+data+"&nbsp;&nbsp;</p><br/>");
+            });
+            $messageBox.val('');
+       });
+
+
+
+       socket.on('new message',function(data){
+         if(data.nick===title){
+           $chat.append("<p style='' align='right' class='msg'><b>"+data.nick+" : </b>"+data.msg+"&nbsp;&nbsp;</p>"+"<p align='right'>"+new Date().toLocaleDateString()+"&nbsp;&nbsp;"+new Date().toLocaleTimeString()+"&nbsp;&nbsp;</p>");
+         }else{
+           $chat.append("<p style='' align='left' class='msg'><b>&nbsp;&nbsp;&nbsp;"+data.nick+" : </b>"+data.msg+"</p>"+"<p align='left'>&nbsp;&nbsp;"+new Date().toLocaleDateString()+"&nbsp;&nbsp;"+new Date().toLocaleTimeString()+"</p>");
+         }
+         scrollCorrect();
+       });
+
+
+
+       socket.on('whisper',function(data){
+           $chat.append("<p align='left' class='whisper'><b>&nbsp;&nbsp;&nbsp;"+data.nick+" : </b>"+data.msg+"</p><br/>");
+
+       });
+
+       socket.on('private',function(data){
+           $chat.append("<p align='right' class='whisper'><b>"+title+"@"+data.nick+": </b>"+data.msg+"&nbsp;&nbsp;</p><br/>");
+
+       });
+
+
+        function scrollCorrect(){
+             chatOuter.scrollTop(chatInner.outerHeight());
+        }
+    });
+
+   </script>
+
+</body>
+</html>

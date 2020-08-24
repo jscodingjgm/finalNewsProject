@@ -1,0 +1,57 @@
+<%- include('header'); -%>
+<div class="row" style="margin-top: 5%; margin-left: 5%; margin-right: 5%;">
+    <div class="col-lg-6">
+        <div id="mapholder"></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="form-group">
+            <label for="name"><b>Company Name :</b></label>
+            <span name="">Update 24/7</span>
+        </div>
+        <div class="form-group">
+            <label for="address"><b>Query:</b></label>
+            <span name="address" style="margin-left: 5px;">
+                Update 24/7
+                </br>
+                ABC cross, XYZ Main
+                </br>
+                pin code: 581320
+                </br>
+            </span>
+        </div>
+    </div>
+</div>
+<%- include('chatbox'); -%>
+
+<%- include('footer'); -%>
+
+<script type="text/javascript">
+    function showLocation(position) {
+       var latitude = position.coords.latitude;
+       var longitude = position.coords.longitude;
+       var latlongvalue = position.coords.latitude + ","
+       + position.coords.longitude;
+       var img_url = "https://maps.googleapis.com/maps/api/staticmap?center="
+       +latlongvalue+"&zoom=14&size=400x300&key=AIzaSyDV_XLbrz5ngUCBkf37Fuc7e6Rd9N24D6o";
+       document.getElementById("mapholder").innerHTML =
+       "<img src='"+img_url+"'>";
+    }
+    function errorHandler(err) {
+       if(err.code == 1) {
+          alert("Error: Access is denied!");
+       } else if( err.code == 2) {
+          alert("Error: Position is unavailable!");
+       }
+    }
+    function getLocation(){
+       if(navigator.geolocation){
+          // timeout at 60000 milliseconds (60 seconds)
+          var options = {timeout:60000};
+          navigator.geolocation.getCurrentPosition
+          (showLocation, errorHandler, options);
+       } else{
+          alert("Sorry, browser does not support geolocation!");
+       }
+    }
+    getLocation();
+ </script>
